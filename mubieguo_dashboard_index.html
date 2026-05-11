@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>木鱉果智慧果園 - 即時儀表板</title>
+
+  <style>
+    :root {
+      --bg: #f3f8f1;
+      --card: #ffffff;
+      --main: #2f7d32;
+      --main-dark: #1b5e20;
+      --accent: #ff9800;
+      --text: #243024;
+      --muted: #6b756b;
+      --border: #d8e6d4;
+      --danger: #d32f2f;
+      --shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif;
+      background: linear-gradient(135deg, #e8f5e9, #fff8e1);
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr 2fr 1fr;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+      background: var(--card);
+      border-radius: 22px;
+      padding: 18px 22px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .datebox, .clock {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--main-dark);
+      text-align: center;
+    }
+
+    .title { text-align: center; }
+
+    .title h1 {
+      margin: 0;
+      font-size: 34px;
+      letter-spacing: 2px;
+      color: var(--main-dark);
+    }
+
+    .title small {
+      display: inline-block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+      letter-spacing: 1px;
+    }
+
+    .top-panels {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .panel, .table-wrap {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel h2, .table-title h3 {
+      margin: 0 0 14px 0;
+      color: var(--main-dark);
+      font-size: 22px;
+    }
+
+    .weather-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .wt-right {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    .weather-grid, .env-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .weather-cell, .env-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #f8fbf7;
+      border-radius: 18px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      min-height: 82px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .weather-cell img, .env-cell img {
+      width: 46px;
+      height: 46px;
+      object-fit: contain;
+    }
+
+    .value {
+      font-size: 28px;
+      color: var(--accent);
+      font-weight: 800;
+    }
+
+    .table-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .depth-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 999px;
+      padding: 9px 15px;
+      background: #edf6ea;
+      color: var(--main-dark);
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      transition: 0.2s;
+    }
+
+    .btn:hover, .btn.active {
+      background: var(--main);
+      color: white;
+      transform: translateY(-1px);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 16px;
+    }
+
+    thead {
+      background: var(--main);
+      color: white;
+    }
+
+    th, td {
+      padding: 14px 10px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      font-size: 18px;
+    }
+
+    tbody tr:nth-child(even) { background: #f8fbf7; }
+    tbody tr:hover { background: #fff8e1; }
+
+    .station-name {
+      font-weight: 800;
+      color: var(--main-dark);
+    }
+
+    .warn {
+      color: var(--danger);
+      font-weight: 800;
+    }
+
+    .footer-line {
+      margin-top: 14px;
+      padding: 12px 14px;
+      background: #f8fbf7;
+      border-radius: 14px;
+      color: var(--muted);
+      font-size: 15px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+
+    .status-line {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 14px;
+      text-align: right;
+    }
+
+    df-messenger {
+      --df-messenger-bot-message: #f1f8e9;
+      --df-messenger-button-titlebar-color: #2f7d32;
+      --df-messenger-chat-background-color: #ffffff;
+      --df-messenger-font-color: #243024;
+      --df-messenger-send-icon: #2f7d32;
+      --df-messenger-user-message: #fff3e0;
+    }
+
+    @media (max-width: 850px) {
+      header { grid-template-columns: 1fr; }
+      .top-panels { grid-template-columns: 1fr; }
+      .weather-grid, .env-grid { grid-template-columns: 1fr; }
+      .title h1 { font-size: 28px; }
+      th, td { font-size: 15px; padding: 10px 6px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="datebox" id="dateBox">--</div>
+      <div class="title">
+        <h1>木鱉果智慧果園</h1>
+        <small>Real-time Dashboard</small>
+      </div>
+      <div class="clock"><div id="mainClock">00:00:00</div></div>
+    </header>
+
+    <div class="top-panels">
+      <section class="panel">
+        <h2 class="weather-title">
+          <span class="wt-left">彰化 溪湖鎮天氣狀況</span>
+          <span class="wt-right">資料來源：Open-Meteo 即時天氣 API</span>
+        </h2>
+
+        <div class="weather-grid">
+          <div class="weather-cell">
+            <img id="weatherIcon" src="https://img.icons8.com/emoji/48/sun-emoji.png" alt="weather" />
+            <span>天氣：<span id="weatherDesc">—</span></span>
+          </div>
+
+          <div class="weather-cell">
+            <img src="https://img.icons8.com/emoji/48/thermometer-emoji.png" alt="temp" />
+            <span>氣溫：<span id="weatherTemp">—</span> °C</span>
+          </div>
+
+          <div class="weather-cell">
+            <img src="https://img.icons8.com/color/48/humidity.png" alt="humidity" />
+            <span>濕度：<span id="weatherHumi">—</span> %</span>
+          </div>
+
+          <div class="weather-cell">
+            <img src="https://img.icons8.com/emoji/48/umbrella-with-rain-drops.png" alt="rain" />
+            <span>降雨量：<span id="rainfall">—</span> mm</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>木鱉果園感測器摘要</h2>
+
+        <div class="env-grid">
+          <div class="env-cell">
+            <img src="https://img.icons8.com/emoji/48/thermometer-emoji.png" alt="temp" />
+            <div>
+              <span>第一站溫度</span><br />
+              <span class="value" id="envTemp">—</span>
+            </div>
+          </div>
+
+          <div class="env-cell">
+            <img src="https://img.icons8.com/color/48/humidity.png" alt="humidity" />
+            <div>
+              <span>第一站含水率</span><br />
+              <span class="value" id="envHumi">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="status-line" id="dataStatus">資料狀態：等待讀取</div>
+      </section>
+    </div>
+
+    <section class="table-wrap">
+      <div class="table-title">
+        <h3>木鱉果第一站與第二站土壤數據</h3>
+
+        <div class="depth-buttons">
+          <button class="btn active" id="btnRefresh">立即更新</button>
+          <button class="btn" id="btnFullscreen">全螢幕</button>
+          <button class="btn" id="btnNotify">🔔 通知測試</button>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>項目</th>
+            <th>溫度 (°C)</th>
+            <th>含水率 (%)</th>
+            <th>氮 (N)</th>
+            <th>磷 (P)</th>
+            <th>鉀 (K)</th>
+          </tr>
+        </thead>
+
+        <tbody id="tbody">
+          <tr>
+            <td colspan="6">資料讀取中...</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="footer-line" id="footerInfo">
+        天氣更新時間：— ｜ 第一站讀取時間：— ｜ 第二站讀取時間：— ｜ 🔄 下次更新倒數：—
+      </div>
+    </section>
+  </div>
+
+  <script>
+    /************************************************************
+     * 木鱉果智慧果園儀表板
+     * 第一站 ThingSpeak Channel：3233666
+     * 第二站 ThingSpeak Channel：3344832
+     * 天氣地點：彰化縣溪湖鎮
+     ************************************************************/
+
+    /***********************
+     * 1. 使用者設定區
+     ***********************/
+
+    // 第一站：明亮木鱉果園 - 第一站
+    const CHANNEL_1_ID = "3233666";
+    const CHANNEL_1_READ_KEY = "V409M70T5K7YCMBM";
+
+    // 第二站：明亮木鱉果園 - 第二站
+    const CHANNEL_2_ID = "3344832";
+    const CHANNEL_2_READ_KEY = "CAIBSPDQF9R75W2L";
+
+    // 更新頻率，單位秒
+    const REFRESH_SECONDS = 60;
+
+    // 彰化縣溪湖鎮大約經緯度
+    const WEATHER_LAT = 23.9593;
+    const WEATHER_LON = 120.4800;
+
+    /***********************
+     * 2. 全域變數
+     ***********************/
+
+    let station1Data = null;
+    let station2Data = null;
+    let latestStation1Time = "—";
+    let latestStation2Time = "—";
+    let latestWeatherTime = "—";
+    let countdown = REFRESH_SECONDS;
+
+    /***********************
+     * 3. 時鐘與日期
+     ***********************/
+
+    function pad2(n) {
+      return String(n).padStart(2, "0");
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const week = ["日", "一", "二", "三", "四", "五", "六"];
+
+      document.getElementById("mainClock").textContent =
+        `${pad2(now.getHours())}:${pad2(now.getMinutes())}:${pad2(now.getSeconds())}`;
+
+      document.getElementById("dateBox").textContent =
+        `${now.getFullYear()}/${pad2(now.getMonth() + 1)}/${pad2(now.getDate())} 星期${week[now.getDay()]}`;
+    }
+
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    /***********************
+     * 4. 數值處理
+     ***********************/
+
+    function formatValue(value, digits = 1) {
+      if (value === null || value === undefined || value === "") return "—";
+      const num = Number(value);
+      if (Number.isNaN(num)) return "—";
+      return num.toFixed(digits);
+    }
+
+    function formatTime(timeString) {
+      if (!timeString) return "—";
+      const d = new Date(timeString);
+      if (Number.isNaN(d.getTime())) return timeString;
+      return `${d.getFullYear()}/${pad2(d.getMonth() + 1)}/${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+    }
+
+    /***********************
+     * 5. ThingSpeak 雙站讀取
+     ***********************/
+
+    function getThingSpeakUrl(channelId, readKey) {
+      return `https://api.thingspeak.com/channels/${channelId}/feeds/last.json?api_key=${readKey}`;
+    }
+
+    async function fetchThingSpeak() {
+      const status = document.getElementById("dataStatus");
+
+      try {
+        status.textContent = "資料狀態：讀取 ThingSpeak 第一站、第二站中...";
+
+        const url1 = getThingSpeakUrl(CHANNEL_1_ID, CHANNEL_1_READ_KEY);
+        const url2 = getThingSpeakUrl(CHANNEL_2_ID, CHANNEL_2_READ_KEY);
+
+        const [res1, res2] = await Promise.all([
+          fetch(url1, { cache: "no-store" }),
+          fetch(url2, { cache: "no-store" })
+        ]);
+
+        if (!res1.ok) throw new Error(`第一站讀取失敗 HTTP ${res1.status}`);
+        if (!res2.ok) throw new Error(`第二站讀取失敗 HTTP ${res2.status}`);
+
+        station1Data = await res1.json();
+        station2Data = await res2.json();
+
+        latestStation1Time = formatTime(station1Data.created_at);
+        latestStation2Time = formatTime(station2Data.created_at);
+
+        renderTable();
+        updateEnvPanel();
+
+        status.textContent = "資料狀態：雙站資料讀取成功";
+      } catch (err) {
+        console.error(err);
+        status.textContent = "資料狀態：ThingSpeak 雙站讀取失敗，請檢查 Channel ID / Read API Key / 網路";
+        renderErrorRow("ThingSpeak 雙站讀取失敗，請檢查 Channel ID、Read API Key 或網路連線");
+      }
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById("tbody");
+      tbody.innerHTML = "";
+
+      if (!station1Data || !station2Data) {
+        renderErrorRow("尚未取得雙站資料");
+        return;
+      }
+
+      const stations = [
+        {
+          name: "木鱉果第一站",
+          data: station1Data
+        },
+        {
+          name: "木鱉果第二站",
+          data: station2Data
+        }
+      ];
+
+      stations.forEach(station => {
+        const d = station.data;
+
+        // 預設欄位：field1 溫度、field2 含水率、field3 氮、field4 磷、field5 鉀
+        const temp = formatValue(d.field1);
+        const moistureRaw = d.field2;
+        const moisture = formatValue(moistureRaw);
+        const nitrogen = formatValue(d.field3, 0);
+        const phosphorus = formatValue(d.field4, 0);
+        const potassium = formatValue(d.field5, 0);
+
+        const moistureNum = Number(moistureRaw);
+        const moistureClass = !Number.isNaN(moistureNum) && moistureNum < 25 ? "warn" : "";
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="station-name">${station.name}</td>
+          <td>${temp}</td>
+          <td class="${moistureClass}">${moisture}</td>
+          <td>${nitrogen}</td>
+          <td>${phosphorus}</td>
+          <td>${potassium}</td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderErrorRow(message) {
+      const tbody = document.getElementById("tbody");
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="warn">${message}</td>
+        </tr>
+      `;
+    }
+
+    function updateEnvPanel() {
+      if (!station1Data) return;
+
+      document.getElementById("envTemp").textContent = `${formatValue(station1Data.field1)} °C`;
+      document.getElementById("envHumi").textContent = `${formatValue(station1Data.field2)} %`;
+    }
+
+    /***********************
+     * 6. 彰化溪湖天氣 API
+     * 使用 Open-Meteo，免 API Key。
+     ***********************/
+
+    function weatherCodeToText(code) {
+      const map = {
+        0: "晴朗",
+        1: "大致晴朗",
+        2: "局部多雲",
+        3: "陰天",
+        45: "有霧",
+        48: "霧凇",
+        51: "毛毛雨",
+        53: "毛毛雨",
+        55: "毛毛雨",
+        61: "小雨",
+        63: "中雨",
+        65: "大雨",
+        80: "短暫陣雨",
+        81: "陣雨",
+        82: "強陣雨",
+        95: "雷雨",
+        96: "雷雨伴隨冰雹",
+        99: "強雷雨伴隨冰雹"
+      };
+      return map[code] || `天氣代碼 ${code}`;
+    }
+
+    function weatherCodeToIcon(code) {
+      if ([0, 1].includes(code)) return "https://img.icons8.com/emoji/48/sun-emoji.png";
+      if ([2, 3].includes(code)) return "https://img.icons8.com/emoji/48/cloud-emoji.png";
+      if ([45, 48].includes(code)) return "https://img.icons8.com/emoji/48/fog.png";
+      if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) return "https://img.icons8.com/emoji/48/umbrella-with-rain-drops.png";
+      if ([95, 96, 99].includes(code)) return "https://img.icons8.com/emoji/48/cloud-with-lightning-and-rain.png";
+      return "https://img.icons8.com/emoji/48/sun-emoji.png";
+    }
+
+    async function fetchWeather() {
+      try {
+        const url =
+          `https://api.open-meteo.com/v1/forecast?latitude=${WEATHER_LAT}&longitude=${WEATHER_LON}` +
+          `&current=temperature_2m,relative_humidity_2m,precipitation,weather_code` +
+          `&timezone=Asia%2FTaipei`;
+
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(`Weather HTTP ${res.status}`);
+
+        const data = await res.json();
+        const c = data.current;
+
+        document.getElementById("weatherDesc").textContent = weatherCodeToText(c.weather_code);
+        document.getElementById("weatherIcon").src = weatherCodeToIcon(c.weather_code);
+        document.getElementById("weatherTemp").textContent = formatValue(c.temperature_2m);
+        document.getElementById("weatherHumi").textContent = formatValue(c.relative_humidity_2m, 0);
+        document.getElementById("rainfall").textContent = formatValue(c.precipitation);
+
+        latestWeatherTime = formatTime(c.time);
+      } catch (err) {
+        console.error(err);
+        document.getElementById("weatherDesc").textContent = "讀取失敗";
+        document.getElementById("weatherTemp").textContent = "—";
+        document.getElementById("weatherHumi").textContent = "—";
+        document.getElementById("rainfall").textContent = "—";
+      }
+    }
+
+    /***********************
+     * 7. 頁面互動
+     ***********************/
+
+    document.getElementById("btnRefresh").addEventListener("click", () => {
+      countdown = REFRESH_SECONDS;
+      loadAllData();
+    });
+
+    document.getElementById("btnFullscreen").addEventListener("click", () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.();
+      } else {
+        document.exitFullscreen?.();
+      }
+    });
+
+    document.getElementById("btnNotify").addEventListener("click", async () => {
+      if (!("Notification" in window)) {
+        alert("此瀏覽器不支援通知功能");
+        return;
+      }
+
+      if (Notification.permission === "default") {
+        await Notification.requestPermission();
+      }
+
+      if (Notification.permission === "granted") {
+        new Notification("木鱉果智慧果園", {
+          body: "通知測試成功：系統可用於土壤含水率警示。",
+          icon: "https://img.icons8.com/emoji/48/seedling.png"
+        });
+      } else {
+        alert("尚未允許通知權限");
+      }
+    });
+
+    /***********************
+     * 8. 頁尾資訊與倒數
+     ***********************/
+
+    function updateFooter() {
+      document.getElementById("footerInfo").textContent =
+        `天氣更新時間：${latestWeatherTime} ｜ 第一站讀取時間：${latestStation1Time} ｜ 第二站讀取時間：${latestStation2Time} ｜ 🔄 下次更新倒數：${countdown} 秒`;
+    }
+
+    setInterval(() => {
+      countdown--;
+      if (countdown <= 0) {
+        countdown = REFRESH_SECONDS;
+        loadAllData();
+      }
+      updateFooter();
+    }, 1000);
+
+    /***********************
+     * 9. 啟動
+     ***********************/
+
+    async function loadAllData() {
+      await Promise.all([
+        fetchThingSpeak(),
+        fetchWeather()
+      ]);
+      updateFooter();
+    }
+
+    loadAllData();
+  </script>
+
+  <!-- Dialogflow 小助手：如果不需要，可以刪掉下面整段 -->
+  <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
+
+  <df-messenger
+    intent="WELCOME"
+    chat-title="木鱉果智慧助手"
+    agent-id="8b30913c-be1a-4cd9-9309-136c81726d04"
+    language-code="zh-tw">
+  </df-messenger>
+</body>
+</html>
