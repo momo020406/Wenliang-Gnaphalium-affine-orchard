@@ -510,14 +510,14 @@ function updateSensorSummary(){
     const m1=Number(v1.soilMoisture);
     document.getElementById("s1Temp").textContent=roundInt(v1.soilTemp);
     document.getElementById("s1Moisture").textContent=roundInt(v1.soilMoisture);
-    document.getElementById("s1Moisture").className=!Number.isNaN(m1)&&m1<25?"sensor-value warn":"sensor-value";
+    document.getElementById("s1Moisture").className=!Number.isNaN(m1)&&m1<25?"sensor-value":"sensor-value";
   }
   if(station2Data){
     const v2=getStationValues(station2Data);
     const m2=Number(v2.soilMoisture);
     document.getElementById("s2Temp").textContent=roundInt(v2.soilTemp);
     document.getElementById("s2Moisture").textContent=roundInt(v2.soilMoisture);
-    document.getElementById("s2Moisture").className=!Number.isNaN(m2)&&m2<25?"sensor-value warn":"sensor-value";
+    document.getElementById("s2Moisture").className=!Number.isNaN(m2)&&m2<25?"sensor-value":"sensor-value";
   }
 }
 
